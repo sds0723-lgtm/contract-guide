@@ -92,6 +92,17 @@ details .body{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px;fon
 .todo{display:inline-block;background:var(--warn-soft);color:var(--warn);border:1px dashed var(--warn);border-radius:6px;padding:0 6px;font-size:.85rem;font-weight:600}
 .callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 8px 8px 0;font-size:.92rem}
 .btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-weight:600;padding:10px 14px;border-radius:8px;background:var(--accent);color:var(--accent-ink);text-decoration:none;border:0;cursor:pointer}
+#lookup .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+#lookup .row label{flex:1 1 200px}
+.stamp{font-size:.86rem;border-radius:8px;padding:8px 12px;background:var(--sunk)}
+.stamp.old{background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;font-size:.92rem;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+.bar{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:hidden;margin-top:4px}
+.bar i{position:absolute;top:0;bottom:0;left:0;border-radius:4px}
+textarea.out{font:inherit;font-size:.82rem;width:100%;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);color:var(--ink)}
+.btn.line{background:var(--surface);color:var(--accent);border:1px solid var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:.9rem;max-width:calc(100% - 32px);z-index:20}
 footer{font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
@@ -108,7 +119,7 @@ footer{font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;ga
     <div><b>2억 원</b><span>동일 업체 연간 금액 한도</span></div>
     <div><b>공단 전체</b><span>모든 부서 계약 합산</span></div>
   </section>
-  <p class="src">근거: 행정안전부 예규 「지방자치단체 입찰 및 계약집행기준」 제2026-395호(2026.11.6. 시행) · 「지방계약법 시행령」 제30조제1항제2호</p>
+  <p class="src">근거: 행정안전부 예규 「지방자치단체 입찰 및 계약집행기준」 제2026-395호(2026.11.6. 시행) · 「지방계약법 시행령」 제30조제1항제2호 · 공단은 이 지방자치단체 기준을 함께 따릅니다.</p>
 
   <section class="panel" aria-labelledby="calcT">
     <span class="step-k">1단계</span>
@@ -135,12 +146,42 @@ footer{font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;ga
     <div id="result" aria-live="polite"></div>
   </section>
 
-  <section class="panel" aria-labelledby="flowT">
+  <section class="panel" id="lookup" aria-labelledby="lkT">
     <span class="step-k">2단계</span>
+    <h2 id="lkT">업체 한도가 남았는지 확인하세요</h2>
+    <p class="stamp" id="lkStamp">현황을 불러오는 중입니다.</p>
+    <div id="lkLock" class="row">
+      <label class="f">직원 확인 비밀번호<input id="lkPass" type="password" autocomplete="current-password" placeholder="경영기획팀이 안내한 비밀번호"></label>
+      <button type="button" class="btn" id="lkOpen">열기</button>
+      <label class="chk" style="flex-basis:100%"><input type="checkbox" id="lkRemember"> 이 기기에서 비밀번호 기억</label>
+    </div>
+    <div id="lkBody" hidden>
+      <div class="form">
+        <label class="f">사업자등록번호<input id="lkBiz" inputmode="numeric" placeholder="000-00-00000"></label>
+        <label class="f">계약 예정금액(원)<input id="lkAmt" class="amt" inputmode="numeric" placeholder="1단계 추정가격의 부가세 포함 금액 등"></label>
+      </div>
+      <div class="btns"><button type="button" class="btn" id="lkCheck">한도 확인</button><button type="button" class="btn line" id="lkLogout">잠그기</button></div>
+      <div id="lkResult" aria-live="polite"></div>
+      <div id="lkReq" hidden class="panel" style="border-style:dashed">
+        <h3>선점 신청 내용 만들기</h3>
+        <p class="small muted">아래를 채우고 복사해 경영기획팀 계약담당자에게 메신저로 보내세요. 선점번호를 받기 전에는 견적을 요청하지 마세요.</p>
+        <div class="form">
+          <label class="f">부서<input id="rqDept"></label>
+          <label class="f">담당자<input id="rqMgr"></label>
+          <label class="f full">계약명<input id="rqTitle"></label>
+        </div>
+        <div class="btns"><button type="button" class="btn" id="rqCopy">신청 내용 복사</button></div>
+        <textarea class="out" id="rqOut" hidden readonly aria-label="복사할 신청 내용"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="flowT">
+    <span class="step-k">3단계</span>
     <h2 id="flowT">계약 전 이렇게 진행하세요</h2>
     <ol class="flow">
-      <li><div><b>업체 한도 확인 <span class="who">요청 부서</span></b><p>공유폴더의 <b>부서용 한도 현황</b> 파일을 열어 사업자등록번호로 업체를 조회합니다. 체결 건과 다른 부서의 선점 건이 모두 합산되어 있습니다.</p><p id="sharePath"></p></div></li>
-      <li><div><b>선점 신청 <span class="who">요청 부서</span></b><p>"신청 가능"이면 같은 파일에서 선점 신청서를 저장합니다. 남은 1회를 여러 부서가 원하면 먼저 신청한 부서가 사용합니다.</p></div></li>
+      <li><div><b>업체 한도 확인 <span class="who">요청 부서</span></b><p>2단계 조회 또는 공유폴더의 <b>부서용 한도 현황</b> 파일에서 사업자등록번호로 업체를 조회합니다. 체결 건과 다른 부서의 선점 건이 모두 합산되어 있습니다.</p><p id="sharePath"></p></div></li>
+      <li><div><b>선점 신청 <span class="who">요청 부서</span></b><p>"신청 가능"이면 2단계에서 만든 신청 내용을 메신저로 보내거나, 부서용 현황 파일에서 선점 신청서를 저장합니다. 남은 1회를 여러 부서가 원하면 먼저 신청한 부서가 사용합니다.</p></div></li>
       <li><div><b>선점번호 발급 <span class="who">경영기획팀</span></b><p>계약담당자가 신청 순서대로 판정해 선점번호를 발급하거나 반려합니다. 결과는 부서용 현황 파일의 "처리 결과"에서 확인합니다.</p></div></li>
       <li><div><b>견적 요청·품의 <span class="who">요청 부서</span></b><p>선점번호를 받은 뒤 견적을 요청하고, 계약 품의서에 선점번호를 적습니다. <b>선점번호가 없는 1인 견적 품의는 접수되지 않습니다.</b></p></div></li>
       <li><div><b>체결 확정 <span class="who">경영기획팀</span></b><p>체결 후 계약담당자가 확정 금액으로 원장을 정리합니다. 계약을 하지 않게 되면 즉시 선점 취소를 요청하세요. 선점은 <span id="resDays"></span> 안에 체결하지 않으면 소멸합니다.</p></div></li>
@@ -186,7 +227,7 @@ footer{font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;ga
 /* 공단 운영 정보: 확정되면 빈칸을 채우세요. 빈칸은 "확인 필요"로 표시됩니다. */
 var CFG={
   dept:'경영기획팀',
-  tel:'',            // 계약담당자 전화 (예: 055-831-0000)
+  tel:'055-831-7217', // 계약담당자 전화
   sharePath:'',      // 부서용 한도 현황 파일 위치 (예: \\공유폴더\수의계약한도\수의계약_한도현황(부서용).html)
   resDays:14,        // 선점 유효기간(일)
   generalCap:20000000, specialCap:50000000, excludeBelow:2000000, countFrom:5000000, countLimit:5, amountLimit:200000000
@@ -197,7 +238,7 @@ function todo(l){return '<span class="todo">확인 필요: '+esc(l)+'</span>'}
 function man(n){n=Math.round(n);var e=Math.floor(n/1e8),m=Math.round((n%1e8)/1e4);return e&&m?e+'억 '+m.toLocaleString('ko-KR')+'만 원':e?e+'억 원':m.toLocaleString('ko-KR')+'만 원'}
 var type='물품';
 $('resDays').textContent=CFG.resDays+'일';
-$('sharePath').innerHTML='파일 위치: '+(CFG.sharePath?'<b>'+esc(CFG.sharePath)+'</b>':todo('공유폴더 경로'));
+$('sharePath').innerHTML='파일 위치: '+(CFG.sharePath?'<b>'+esc(CFG.sharePath)+'</b>':'경영기획팀 계약담당자('+esc(CFG.tel)+')에게 문의하세요.');
 $('contact').innerHTML=esc(CFG.dept)+' 계약담당자 · '+(CFG.tel?'<a href="tel:'+esc(CFG.tel)+'">'+esc(CFG.tel)+'</a>':todo('계약담당자 전화'));
 
 function judge(){
@@ -218,6 +259,70 @@ $('est').addEventListener('input',function(){var d=this.value.replace(/\D/g,'');
 ['vt','social30','ex33'].forEach(function(id){$(id).addEventListener('change',judge)});
 document.querySelectorAll('[data-type]').forEach(function(b){b.onclick=function(){type=b.dataset.type;document.querySelectorAll('[data-type]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});judge()}});
 judge();
+
+/* ---------- 업체 한도 조회 (암호화 현황 파일) ---------- */
+var STATUS=null,ENC=null,lkCur=null;
+function u8(b){var s=atob(b),a=new Uint8Array(s.length);for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function toast(m){var t=$('toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},3200)}
+function fmtBiz(d){return d.length===10?d.slice(0,3)+'-'+d.slice(3,5)+'-'+d.slice(5):d}
+async function decrypt(pass){
+  var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
+  var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:u8(ENC.salt),iterations:ENC.it,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:u8(ENC.iv)},key,u8(ENC.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function stampText(){var g=ENC.generatedAt||'',old=g.slice(0,10)!==today();$('lkStamp').className='stamp'+(old?' old':'');
+  $('lkStamp').innerHTML='현황 기준 <b>'+esc(g)+'</b>'+(old?' · 오늘 갱신 전 자료입니다. 판단이 애매하면 계약담당자에게 확인하세요.':' · 오늘 갱신된 자료입니다.')}
+async function openStatus(pass,silent){
+  try{STATUS=await decrypt(pass)}catch(e){STATUS=null;if(!silent)toast('비밀번호가 맞지 않습니다');return false}
+  $('lkLock').hidden=true;$('lkBody').hidden=false;
+  try{if($('lkRemember').checked||silent)localStorage.setItem('cg-pass',pass)}catch(e){}
+  return true;
+}
+fetch('contract-status.json?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
+  if(!j||j.app!=='sc-climit-status')throw new Error('형식');ENC=j;stampText();
+  var saved=null;try{saved=localStorage.getItem('cg-pass')}catch(e){}
+  if(saved){$('lkRemember').checked=true;openStatus(saved,true)}
+}).catch(function(){$('lkStamp').className='stamp old';$('lkStamp').textContent='아직 게시된 현황이 없거나 불러오지 못했습니다. 공유폴더의 부서용 현황 파일로 확인하거나 계약담당자에게 문의하세요.';$('lkLock').hidden=true});
+$('lkOpen').onclick=function(){var v=$('lkPass').value;if(!v){toast('비밀번호를 입력하세요');return}if(!ENC){toast('현황 파일이 없습니다');return}openStatus(v,false).then(function(ok){if(ok){$('lkPass').value='';toast('현황을 열었습니다')}})};
+$('lkPass').addEventListener('keydown',function(e){if(e.key==='Enter')$('lkOpen').click()});
+$('lkLogout').onclick=function(){STATUS=null;try{localStorage.removeItem('cg-pass')}catch(e){}$('lkBody').hidden=true;$('lkLock').hidden=false;$('lkResult').innerHTML='';$('lkReq').hidden=true;toast('잠갔습니다')};
+$('lkBiz').addEventListener('input',function(){var d=this.value.replace(/\D/g,'').slice(0,10);this.value=fmtBiz(d);$('lkReq').hidden=true});
+$('lkAmt').addEventListener('input',function(){var d=this.value.replace(/\D/g,'');this.value=d?Number(d).toLocaleString('ko-KR'):'';$('lkReq').hidden=true});
+function bar(cur,add,lim){var r=(STATUS.settings.warnRatio||80)/100,col=cur+add>lim?'var(--bad)':cur+add>=lim*r?'var(--warn)':'var(--accent)';return '<div class="bar"><i style="width:'+Math.min(100,(cur+add)/lim*100)+'%;background:'+col+';opacity:.45"></i><i style="width:'+Math.min(100,cur/lim*100)+'%;background:'+col+'"></i></div>'}
+$('lkCheck').onclick=function(){
+  if(!STATUS)return;var ST=STATUS.settings,bz=$('lkBiz').value.replace(/\D/g,''),amt=Number($('lkAmt').value.replace(/\D/g,'')),est=Number(($('est').value||'').replace(/\D/g,''));
+  if(bz.length!==10){toast('사업자등록번호 10자리를 입력하세요');return}
+  if(!est){toast('1단계에 추정가격을 먼저 입력하세요');$('est').focus();return}
+  if(!amt){toast('계약 예정금액을 입력하세요');return}
+  var v=null;for(var i=0;i<STATUS.vendors.length;i++)if(STATUS.vendors[i].b===bz){v=STATUS.vendors[i];break}
+  var vt=$('vt').value,s30=$('social30').checked,cap=vt==='general'||(vt==='social'&&!s30)?ST.generalCap:ST.specialCap;
+  var cnt=v?v.c:0,sum=v?v.a:0,rc=v?v.rc:0,r=(ST.warnRatio||80)/100,k,t,ds,notes=[];
+  if($('ex33').checked||est<ST.excludeBelow){k='mute';t='한도 적용 제외';ds='선점 신청 없이 진행합니다.';}
+  else if(est>cap){k='bad';t='1인 견적 대상이 아닙니다';ds='2인 이상 견적(지정정보처리장치 이용)으로 진행하세요.';}
+  else{var one=est<ST.countFrom?0:1;if(!one)notes.push('추정가격 '+man(ST.countFrom)+' 미만이어서 횟수에는 넣지 않고 금액에만 더합니다.');
+    if(cnt+one>ST.countLimit||sum+amt>ST.amountLimit){k='bad';t='진행 불가 (한도 소진)';ds='이 업체는 올해 한도를 넘게 됩니다. 다른 업체로 견적을 받거나 2인 이상 견적으로 진행하세요.'+(v&&v.h&&v.h.length?' 진행 중 선점: '+v.h.join(', '):'')}
+    else if(cnt+one>=Math.ceil(ST.countLimit*r)||sum+amt>=ST.amountLimit*r){k='warn';t='진행 가능 (한도 임박)';ds='선점이 승인되면 남는 한도는 '+(ST.countLimit-cnt-one)+'회, '+man(ST.amountLimit-sum-amt)+'입니다.'}
+    else{k='ok';t='진행 가능';ds='선점이 승인되면 남는 한도는 '+(ST.countLimit-cnt-one)+'회, '+man(ST.amountLimit-sum-amt)+'입니다.'}
+    lkCur={one:one};
+  }
+  if(ENC.generatedAt.slice(0,10)!==today())notes.push('오늘 갱신 전 현황입니다. 최종 판정은 계약담당자 처리 결과를 따릅니다.');
+  $('lkResult').innerHTML='<div class="verdict '+k+'"><b class="vt">'+t+'</b><span>'+esc(ds)+'</span>'+(notes.length?'<ul>'+notes.map(function(n){return '<li>'+esc(n)+'</li>'}).join('')+'</ul>':'')+'</div>'+
+    (k==='mute'||est>cap?'':'<dl class="kv"><dt>업체</dt><dd>'+esc(v?v.n:'올해 이용 실적이 없는 업체')+'</dd><dt>횟수</dt><dd>체결·선점 '+cnt+'회'+(rc?' (선점 '+rc+'건)':'')+' / 한도 '+ST.countLimit+'회'+bar(cnt,lkCur?lkCur.one:0,ST.countLimit)+'</dd><dt>금액</dt><dd>'+man(sum)+' + 이번 '+man(amt)+' / 한도 '+man(ST.amountLimit)+bar(sum,amt,ST.amountLimit)+'</dd></dl>');
+  $('lkReq').hidden=!(k==='ok'||k==='warn');
+  lkCur=Object.assign(lkCur||{},{bizno:bz,vendor:v?v.n:'',vendorType:vt==='general'?'일반':'특례',estimate:est,amount:amt,type:type});
+};
+$('rqCopy').onclick=function(){
+  if(!lkCur)return;var dept=$('rqDept').value.trim(),mgr=$('rqMgr').value.trim(),title=$('rqTitle').value.trim();
+  if(!dept||!mgr||!title){toast('부서·담당자·계약명을 입력하세요');return}
+  var d=new Date(),pad=function(n){return String(n).padStart(2,'0')},reqAt=today()+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  var o={app:'sc-climit-req',v:1,reqId:'Q'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),reqAt:reqAt,snapshotAt:ENC.generatedAt,dept:dept,manager:mgr,tel:'',type:lkCur.type,title:title,vendor:lkCur.vendor||'(업체명 확인 필요)',bizno:lkCur.bizno,vendorType:lkCur.vendorType,estimate:lkCur.estimate,amount:lkCur.amount,planDate:today()};
+  var txt='[수의계약 선점 신청]\n부서: '+dept+' / 담당: '+mgr+'\n업체: '+o.vendor+' ('+fmtBiz(o.bizno)+')\n계약명: '+title+'\n예정금액: '+o.amount.toLocaleString('ko-KR')+'원 (추정가격 '+o.estimate.toLocaleString('ko-KR')+'원)\n신청 시각: '+reqAt+'\nSCREQ1:'+btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  var ta=$('rqOut');ta.value=txt;ta.hidden=false;
+  var fb=function(){ta.focus();ta.select();toast('선택된 내용을 길게 눌러 복사하세요')};
+  try{navigator.clipboard.writeText(txt).then(function(){toast('복사했습니다. 계약담당자에게 메신저로 보내세요')},fb)}catch(e){fb()}
+};
 </script>
 </body>
 </html>
